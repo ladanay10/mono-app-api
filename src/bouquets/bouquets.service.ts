@@ -171,12 +171,16 @@ export class BouquetsService {
       throw new ConflictException(`Cannot sell a ${bouquet.status} bouquet`);
     }
     const salePrice = await this.resolveSalePrice(bouquet);
-    const revenue = Math.max(0, salePrice - bouquet.discountKopiyky);
+    // Default cash = the full sum the client pays = the profit view's revenue
+    // (flowers − discount + bouquet expenses). Fall back to the flower figure.
+    const profit = await this.repo.getProfit(id);
+    const defaultReceived =
+      profit?.revenueKopiyky ?? Math.max(0, salePrice - bouquet.discountKopiyky);
     await this.repo.updateBouquet(id, {
       status: 'SOLD',
       soldOn: dto.soldOn ?? todayKyiv(),
       salePriceKopiyky: salePrice,
-      amountReceivedKopiyky: dto.amountReceivedKopiyky ?? revenue,
+      amountReceivedKopiyky: dto.amountReceivedKopiyky ?? defaultReceived,
     });
     return this.get(id);
   }

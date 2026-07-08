@@ -10,13 +10,9 @@ export const catalogItemKind = pgEnum('catalog_item_kind', [
   'PACKAGING',
 ]);
 
-export const unitOfMeasure = pgEnum('unit_of_measure', [
-  'STEM',
-  'BUNCH',
-  'PIECE',
-  'GRAM',
-  'METER',
-]);
+// Single unit of measure for the whole app: PIECE (шт). Collapsed from the
+// original STEM/BUNCH/PIECE/GRAM/METER set — see migration 0002.
+export const unitOfMeasure = pgEnum('unit_of_measure', ['PIECE']);
 
 export const bouquetStatus = pgEnum('bouquet_status', [
   'DRAFT',

@@ -22,14 +22,18 @@ describe('money', () => {
     expect(parseQuantity('0.5')).toBe(0.5);
   });
 
-  it('reproduces the worked example (575 / 300 / 225 UAH)', () => {
+  it('reproduces the worked example — client pays for packaging (625 / 275 UAH)', () => {
     const cost =
       lineCostKopiyky(3000, 4) + lineCostKopiyky(12000, 1) + lineCostKopiyky(2000, 3);
-    const revenue =
+    const linesSale =
       lineRevenueKopiyky(6000, 4) + lineRevenueKopiyky(20000, 1) + lineRevenueKopiyky(4500, 3);
-    const otherExpenses = 5000;
-    expect(revenue).toBe(57500); // брудний дохід
+    const bouquetExpenses = 5000; // packaging — the client pays for it
+    expect(linesSale).toBe(57500);
     expect(cost).toBe(30000);
-    expect(revenue - cost - otherExpenses).toBe(22500); // чистий дохід
+    // Client pays for packaging → expenses are added into revenue (БРУДНИЙ ДОХІД).
+    const revenue = linesSale + bouquetExpenses;
+    expect(revenue).toBe(62500); // брудний дохід = уся сума за букет
+    // net = revenue − flowers cost − bouquet expenses = flower margin (packaging passes through)
+    expect(revenue - cost - bouquetExpenses).toBe(27500); // чистий дохід
   });
 });
