@@ -10,12 +10,24 @@ async function bootstrap() {
 
   app.setGlobalPrefix('api');
   app.useGlobalPipes(
-    new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }),
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    }),
   );
-  app.enableCors({ origin: config.env.CORS_ORIGIN, credentials: true });
+  // CORS_ORIGIN="*" allows any origin (the request origin is reflected back so
+  // credentials still work); otherwise only the listed origins are allowed.
+  const allowedOrigins = config.env.CORS_ORIGIN;
+  app.enableCors({
+    origin: allowedOrigins.includes('*') ? true : allowedOrigins,
+    credentials: true,
+  });
 
   await app.listen(config.env.PORT);
   // eslint-disable-next-line no-console
-  console.log(`mono-reports-api listening on http://localhost:${config.env.PORT}/api`);
+  console.log(
+    `mono-reports-api listening on http://localhost:${config.env.PORT}/api`,
+  );
 }
 void bootstrap();

@@ -2,7 +2,9 @@ import { z } from 'zod';
 
 // Validate env at startup; a missing/invalid required var stops the process.
 export const envSchema = z.object({
-  NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
+  NODE_ENV: z
+    .enum(['development', 'test', 'production'])
+    .default('development'),
   PORT: z.coerce.number().int().positive().default(3000),
   DATABASE_URL: z.string().min(1),
   JWT_SECRET: z.string().min(16),
@@ -10,7 +12,17 @@ export const envSchema = z.object({
   OWNER_EMAIL: z.string().email().default('owner@mono.local'),
   OWNER_PASSWORD: z.string().min(6).default('changeme123'),
   OWNER_NAME: z.string().default('MONO Owner'),
-  CORS_ORIGIN: z.string().default('http://localhost:3001'),
+  // Comma-separated list of allowed origins, e.g.
+  // "http://localhost:3001,https://mono.vercel.app". Parsed into a string[].
+  CORS_ORIGIN: z
+    .string()
+    .default('http://localhost:3001')
+    .transform((v) =>
+      v
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean),
+    ),
 });
 
 export type Env = z.infer<typeof envSchema>;
