@@ -15,7 +15,10 @@ import { UpdateBouquetDto } from './dto/update-bouquet.dto';
 import { AddLineDto } from './dto/add-line.dto';
 import { UpdateLineDto } from './dto/update-line.dto';
 import { SellBouquetDto } from './dto/sell-bouquet.dto';
-import { CurrentUser, type AuthUser } from '../common/decorators/current-user.decorator';
+import {
+  CurrentUser,
+  type AuthUser,
+} from '../common/decorators/current-user.decorator';
 
 @Controller('bouquets')
 export class BouquetsController {
@@ -37,7 +40,10 @@ export class BouquetsController {
   }
 
   @Patch(':id')
-  update(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateBouquetDto) {
+  update(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateBouquetDto,
+  ) {
     return this.service.update(id, dto);
   }
 

@@ -1,7 +1,12 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { and, desc, eq, gte, lte, type SQL } from 'drizzle-orm';
 import { DRIZZLE, type Database } from '../db/drizzle';
-import { bouquets, expenses, type Expense, type NewExpense } from '../db/schema';
+import {
+  bouquets,
+  expenses,
+  type Expense,
+  type NewExpense,
+} from '../db/schema';
 
 export interface ExpenseFilter {
   bouquetId?: string;

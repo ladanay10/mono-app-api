@@ -1,5 +1,12 @@
 import { sql } from 'drizzle-orm';
-import { boolean, check, index, pgTable, text, uuid } from 'drizzle-orm/pg-core';
+import {
+  boolean,
+  check,
+  index,
+  pgTable,
+  text,
+  uuid,
+} from 'drizzle-orm/pg-core';
 import { catalogItemKind, unitOfMeasure } from './enums';
 import { money, timestamps } from './columns';
 import { users } from './users';

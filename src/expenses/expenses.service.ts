@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { ExpensesRepository, type ExpenseFilter } from './expenses.repository';
 import { CreateExpenseDto } from './dto/create-expense.dto';
 import type { AuthUser } from '../common/decorators/current-user.decorator';
@@ -21,7 +25,9 @@ export class ExpensesService {
         throw new NotFoundException('Bouquet not found');
       }
     } else if (dto.bouquetId) {
-      throw new BadRequestException('A GENERAL expense must not carry a bouquetId');
+      throw new BadRequestException(
+        'A GENERAL expense must not carry a bouquetId',
+      );
     }
 
     return this.repo.create({

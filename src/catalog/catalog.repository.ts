@@ -1,7 +1,11 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { desc, eq } from 'drizzle-orm';
 import { DRIZZLE, type Database } from '../db/drizzle';
-import { catalogItems, type CatalogItem, type NewCatalogItem } from '../db/schema';
+import {
+  catalogItems,
+  type CatalogItem,
+  type NewCatalogItem,
+} from '../db/schema';
 
 @Injectable()
 export class CatalogRepository {
@@ -15,7 +19,9 @@ export class CatalogRepository {
   }
 
   findById(id: string): Promise<CatalogItem | undefined> {
-    return this.db.query.catalogItems.findFirst({ where: eq(catalogItems.id, id) });
+    return this.db.query.catalogItems.findFirst({
+      where: eq(catalogItems.id, id),
+    });
   }
 
   async create(data: NewCatalogItem): Promise<CatalogItem> {
@@ -23,7 +29,10 @@ export class CatalogRepository {
     return row;
   }
 
-  async update(id: string, data: Partial<NewCatalogItem>): Promise<CatalogItem | undefined> {
+  async update(
+    id: string,
+    data: Partial<NewCatalogItem>,
+  ): Promise<CatalogItem | undefined> {
     const [row] = await this.db
       .update(catalogItems)
       .set({ ...data, updatedAt: new Date() })

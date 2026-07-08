@@ -4,6 +4,7 @@ import { DRIZZLE, type Database } from '../db/drizzle';
 import {
   bouquetLines,
   bouquets,
+  expenses,
   type Bouquet,
   type BouquetLine,
   type NewBouquet,
@@ -28,10 +29,15 @@ export class BouquetsRepository {
   }
 
   listBouquets(): Promise<Bouquet[]> {
-    return this.db.query.bouquets.findMany({ orderBy: [desc(bouquets.createdAt)] });
+    return this.db.query.bouquets.findMany({
+      orderBy: [desc(bouquets.createdAt)],
+    });
   }
 
-  async updateBouquet(id: string, patch: Partial<NewBouquet>): Promise<Bouquet> {
+  async updateBouquet(
+    id: string,
+    patch: Partial<NewBouquet>,
+  ): Promise<Bouquet> {
     const [row] = await this.db
       .update(bouquets)
       .set({ ...patch, updatedAt: new Date() })
@@ -40,8 +46,14 @@ export class BouquetsRepository {
     return row;
   }
 
+  // Deleting a DRAFT also removes its bouquet-scoped expenses (they are
+  // meaningless without the bouquet). Atomic so a failure leaves neither half
+  // gone. Lines cascade via FK; expenses are RESTRICT, hence the explicit wipe.
   async deleteBouquet(id: string): Promise<void> {
-    await this.db.delete(bouquets).where(eq(bouquets.id, id));
+    await this.db.transaction(async (tx) => {
+      await tx.delete(expenses).where(eq(expenses.bouquetId, id));
+      await tx.delete(bouquets).where(eq(bouquets.id, id));
+    });
   }
 
   // --- lines ---
@@ -53,7 +65,9 @@ export class BouquetsRepository {
   }
 
   findLine(id: string): Promise<BouquetLine | undefined> {
-    return this.db.query.bouquetLines.findFirst({ where: eq(bouquetLines.id, id) });
+    return this.db.query.bouquetLines.findFirst({
+      where: eq(bouquetLines.id, id),
+    });
   }
 
   async addLine(data: NewBouquetLine): Promise<BouquetLine> {
@@ -79,12 +93,12 @@ export class BouquetsRepository {
     const res = await this.db.execute(
       sql`SELECT * FROM bouquet_profit WHERE bouquet_id = ${id}`,
     );
-    const rows = res.rows as Record<string, unknown>[];
+    const rows = res.rows;
     return rows[0] ? mapBouquetProfit(rows[0]) : undefined;
   }
 
   async listProfits(): Promise<BouquetProfit[]> {
     const res = await this.db.execute(sql`SELECT * FROM bouquet_profit`);
-    return (res.rows as Record<string, unknown>[]).map(mapBouquetProfit);
+    return res.rows.map(mapBouquetProfit);
   }
 }

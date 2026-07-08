@@ -1,5 +1,13 @@
 import { sql } from 'drizzle-orm';
-import { check, index, numeric, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import {
+  check,
+  index,
+  numeric,
+  pgTable,
+  text,
+  timestamp,
+  uuid,
+} from 'drizzle-orm/pg-core';
 import { unitOfMeasure } from './enums';
 import { money } from './columns';
 import { bouquets } from './bouquets';
@@ -26,7 +34,9 @@ export const bouquetLines = pgTable(
     quantity: numeric('quantity', { precision: 12, scale: 3 }).notNull(),
     unitPurchasePriceKopiyky: money('unit_purchase_price_kopiyky').notNull(),
     unitSalePriceKopiyky: money('unit_sale_price_kopiyky').notNull(),
-    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
   },
   (t) => [
     check('line_quantity_positive', sql`${t.quantity} > 0`),

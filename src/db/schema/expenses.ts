@@ -15,7 +15,9 @@ export const expenses = pgTable(
     scope: expenseScope('scope').notNull(),
     // Set IFF scope = BOUQUET. RESTRICT so a sold bouquet's expense is never
     // orphaned or silently re-labelled as overhead.
-    bouquetId: uuid('bouquet_id').references(() => bouquets.id, { onDelete: 'restrict' }),
+    bouquetId: uuid('bouquet_id').references(() => bouquets.id, {
+      onDelete: 'restrict',
+    }),
     kind: expenseKind('kind').notNull(),
     description: text('description'),
     amountKopiyky: money('amount_kopiyky').notNull(),

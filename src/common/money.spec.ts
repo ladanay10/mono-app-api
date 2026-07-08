@@ -1,4 +1,9 @@
-import { lineCostKopiyky, lineRevenueKopiyky, parseQuantity, roundHalfUp } from './money';
+import {
+  lineCostKopiyky,
+  lineRevenueKopiyky,
+  parseQuantity,
+  roundHalfUp,
+} from './money';
 
 describe('money', () => {
   it('rounds half up', () => {
@@ -22,18 +27,23 @@ describe('money', () => {
     expect(parseQuantity('0.5')).toBe(0.5);
   });
 
-  it('reproduces the worked example — client pays for packaging (625 / 275 UAH)', () => {
+  it('reproduces the worked example — packaging is 100% profit (625 / 325 UAH)', () => {
     const cost =
-      lineCostKopiyky(3000, 4) + lineCostKopiyky(12000, 1) + lineCostKopiyky(2000, 3);
+      lineCostKopiyky(3000, 4) +
+      lineCostKopiyky(12000, 1) +
+      lineCostKopiyky(2000, 3);
     const linesSale =
-      lineRevenueKopiyky(6000, 4) + lineRevenueKopiyky(20000, 1) + lineRevenueKopiyky(4500, 3);
-    const bouquetExpenses = 5000; // packaging — the client pays for it
+      lineRevenueKopiyky(6000, 4) +
+      lineRevenueKopiyky(20000, 1) +
+      lineRevenueKopiyky(4500, 3);
+    const packagingAddOn = 5000; // packaging — a 100%-margin markup the client pays
     expect(linesSale).toBe(57500);
     expect(cost).toBe(30000);
-    // Client pays for packaging → expenses are added into revenue (БРУДНИЙ ДОХІД).
-    const revenue = linesSale + bouquetExpenses;
+    // Client pays for packaging → it is added into revenue (БРУДНИЙ ДОХІД).
+    const revenue = linesSale + packagingAddOn;
     expect(revenue).toBe(62500); // брудний дохід = уся сума за букет
-    // net = revenue − flowers cost − bouquet expenses = flower margin (packaging passes through)
-    expect(revenue - cost - bouquetExpenses).toBe(27500); // чистий дохід
+    // net = revenue − flowers cost (packaging stays in profit; its supply cost is
+    // tracked separately as a GENERAL expense).
+    expect(revenue - cost).toBe(32500); // чистий дохід
   });
 });

@@ -25,7 +25,7 @@ async function bootstrap() {
   });
 
   await app.listen(config.env.PORT);
-  // eslint-disable-next-line no-console
+
   console.log(
     `mono-reports-api listening on http://localhost:${config.env.PORT}/api`,
   );

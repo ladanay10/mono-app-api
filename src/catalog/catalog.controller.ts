@@ -12,7 +12,10 @@ import {
 import { CatalogService } from './catalog.service';
 import { CreateCatalogItemDto } from './dto/create-catalog-item.dto';
 import { UpdateCatalogItemDto } from './dto/update-catalog-item.dto';
-import { CurrentUser, type AuthUser } from '../common/decorators/current-user.decorator';
+import {
+  CurrentUser,
+  type AuthUser,
+} from '../common/decorators/current-user.decorator';
 
 @Controller('catalog')
 export class CatalogController {
@@ -34,7 +37,10 @@ export class CatalogController {
   }
 
   @Patch(':id')
-  update(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateCatalogItemDto) {
+  update(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateCatalogItemDto,
+  ) {
     return this.service.update(id, dto);
   }
 

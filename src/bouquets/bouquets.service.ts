@@ -12,14 +12,14 @@ import { AddLineDto } from './dto/add-line.dto';
 import { UpdateLineDto } from './dto/update-line.dto';
 import { SellBouquetDto } from './dto/sell-bouquet.dto';
 import { pruneUndefined } from '../common/prune';
-import { lineCostKopiyky, lineRevenueKopiyky, parseQuantity } from '../common/money';
+import {
+  lineCostKopiyky,
+  lineRevenueKopiyky,
+  parseQuantity,
+} from '../common/money';
+import { todayKyiv } from '../common/date';
 import type { AuthUser } from '../common/decorators/current-user.decorator';
 import type { Bouquet, BouquetLine } from '../db/schema';
-
-// Today's business date in Europe/Kyiv as YYYY-MM-DD (en-CA renders ISO order).
-function todayKyiv(): string {
-  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Kyiv' }).format(new Date());
-}
 
 function withLineComputed(l: BouquetLine) {
   const quantity = parseQuantity(l.quantity);
@@ -81,7 +81,9 @@ export class BouquetsService {
   async remove(id: string) {
     const bouquet = await this.requireBouquet(id);
     if (bouquet.status !== 'DRAFT') {
-      throw new ConflictException('Only DRAFT bouquets can be deleted; cancel it instead');
+      throw new ConflictException(
+        'Only DRAFT bouquets can be deleted; cancel it instead',
+      );
     }
     await this.repo.deleteBouquet(id);
   }
@@ -128,7 +130,11 @@ export class BouquetsService {
       };
     }
 
-    await this.repo.addLine({ bouquetId, quantity: String(dto.quantity), ...snapshot });
+    await this.repo.addLine({
+      bouquetId,
+      quantity: String(dto.quantity),
+      ...snapshot,
+    });
     return this.get(bouquetId);
   }
 
@@ -136,7 +142,8 @@ export class BouquetsService {
     const bouquet = await this.requireBouquet(bouquetId);
     this.assertDraft(bouquet);
     const line = await this.repo.findLine(lineId);
-    if (!line || line.bouquetId !== bouquetId) throw new NotFoundException('Line not found');
+    if (!line || line.bouquetId !== bouquetId)
+      throw new NotFoundException('Line not found');
     await this.repo.updateLineQuantity(lineId, String(dto.quantity));
     return this.get(bouquetId);
   }
@@ -145,7 +152,8 @@ export class BouquetsService {
     const bouquet = await this.requireBouquet(bouquetId);
     this.assertDraft(bouquet);
     const line = await this.repo.findLine(lineId);
-    if (!line || line.bouquetId !== bouquetId) throw new NotFoundException('Line not found');
+    if (!line || line.bouquetId !== bouquetId)
+      throw new NotFoundException('Line not found');
     await this.repo.deleteLine(lineId);
     return this.get(bouquetId);
   }
@@ -175,7 +183,8 @@ export class BouquetsService {
     // (flowers − discount + bouquet expenses). Fall back to the flower figure.
     const profit = await this.repo.getProfit(id);
     const defaultReceived =
-      profit?.revenueKopiyky ?? Math.max(0, salePrice - bouquet.discountKopiyky);
+      profit?.revenueKopiyky ??
+      Math.max(0, salePrice - bouquet.discountKopiyky);
     await this.repo.updateBouquet(id, {
       status: 'SOLD',
       soldOn: dto.soldOn ?? todayKyiv(),

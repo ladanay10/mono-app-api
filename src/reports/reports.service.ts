@@ -1,13 +1,15 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { sql } from 'drizzle-orm';
 import { DRIZZLE, type Database } from '../db/drizzle';
+import { todayKyiv } from '../common/date';
+import { num, str, strOrNull } from '../common/sql-row';
 
-function num(v: unknown): number {
-  return v === null || v === undefined ? 0 : Number(v);
-}
-
-function todayKyiv(): string {
-  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Kyiv' }).format(new Date());
+// Query dates land in a `BETWEEN` — reject anything that isn't a plain
+// YYYY-MM-DD so a malformed value fails as 400, not a Postgres 500.
+function assertYmd(value: string | undefined, field: string): void {
+  if (value !== undefined && !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    throw new BadRequestException(`${field} must be a YYYY-MM-DD date`);
+  }
 }
 
 function firstOfMonthKyiv(): string {
@@ -20,6 +22,8 @@ export class ReportsService {
 
   // Period P&L over SOLD bouquets (by sold_on) + GENERAL expenses (by incurred_on).
   async summary(from?: string, to?: string) {
+    assertYmd(from, 'from');
+    assertYmd(to, 'to');
     const f = from ?? firstOfMonthKyiv();
     const t = to ?? todayKyiv();
     const res = await this.db.execute(sql`
@@ -39,7 +43,7 @@ export class ReportsService {
         COALESCE((SELECT SUM(amount_kopiyky) FROM expenses
                   WHERE scope = 'GENERAL' AND incurred_on BETWEEN ${f} AND ${t}), 0) AS general_expenses
     `);
-    const r = (res.rows as Record<string, unknown>[])[0] ?? {};
+    const r = res.rows[0] ?? {};
     const grossRevenue = num(r.gross_revenue);
     const flowersCost = num(r.flowers_cost);
     const bouquetExpenses = num(r.bouquet_expenses);
@@ -52,13 +56,21 @@ export class ReportsService {
       flowersCostKopiyky: flowersCost,
       bouquetExpensesKopiyky: bouquetExpenses,
       generalExpensesKopiyky: generalExpenses,
-      netProfitKopiyky: grossRevenue - flowersCost - bouquetExpenses - generalExpenses, // чистий
+      // Bouquet add-ons (packaging) are 100% profit, kept inside gross; only the
+      // real supply cost (a GENERAL expense) is subtracted.
+      netProfitKopiyky: grossRevenue - flowersCost - generalExpenses, // чистий
       cashReceivedKopiyky: num(r.cash_received),
     };
   }
 
   // Per-month gross/net for a year.
   async monthly(year?: number) {
+    if (
+      year !== undefined &&
+      (!Number.isInteger(year) || year < 1970 || year > 9999)
+    ) {
+      throw new BadRequestException('year must be a 4-digit year');
+    }
     const y = year ?? Number(todayKyiv().slice(0, 4));
     const res = await this.db.execute(sql`
       WITH m AS (
@@ -88,25 +100,27 @@ export class ReportsService {
       FROM m FULL OUTER JOIN g ON m.month = g.month
       ORDER BY 1
     `);
-    return (res.rows as Record<string, unknown>[]).map((r) => {
+    return res.rows.map((r) => {
       const grossRevenue = num(r.gross_revenue);
       const flowersCost = num(r.flowers_cost);
       const bouquetExpenses = num(r.bouquet_expenses);
       const generalExpenses = num(r.general_expenses);
       return {
-        month: String(r.month),
+        month: str(r.month),
         soldCount: num(r.sold_count),
         grossRevenueKopiyky: grossRevenue,
         flowersCostKopiyky: flowersCost,
         bouquetExpensesKopiyky: bouquetExpenses,
         generalExpensesKopiyky: generalExpenses,
-        netProfitKopiyky: grossRevenue - flowersCost - bouquetExpenses - generalExpenses,
+        netProfitKopiyky: grossRevenue - flowersCost - generalExpenses,
       };
     });
   }
 
   // Most-used / most-profitable flowers across SOLD bouquets in a period.
   async topFlowers(from?: string, to?: string, limit = 20) {
+    assertYmd(from, 'from');
+    assertYmd(to, 'to');
     const f = from ?? firstOfMonthKyiv();
     const t = to ?? todayKyiv();
     const res = await this.db.execute(sql`
@@ -127,10 +141,10 @@ export class ReportsService {
       ORDER BY total_margin DESC
       LIMIT ${limit}
     `);
-    return (res.rows as Record<string, unknown>[]).map((r) => ({
-      catalogItemId: r.catalog_item_id ? String(r.catalog_item_id) : null,
-      name: String(r.name),
-      unit: String(r.unit),
+    return res.rows.map((r) => ({
+      catalogItemId: strOrNull(r.catalog_item_id),
+      name: str(r.name),
+      unit: str(r.unit),
       totalQuantity: num(r.total_quantity),
       timesUsed: num(r.times_used),
       totalCostKopiyky: num(r.total_cost),
@@ -139,21 +153,25 @@ export class ReportsService {
     }));
   }
 
-  // SOLD bouquets not yet fully paid.
+  // SOLD bouquets not yet fully paid. Debt is measured against the full sum the
+  // client owes (bouquet_profit.revenue — includes bouquet expenses), so packaging
+  // the client pays for is counted, consistent with the profit model.
   async outstanding() {
     const res = await this.db.execute(sql`
-      SELECT b.id, b.title, b.sold_on, b.sale_price_kopiyky, b.discount_kopiyky, b.amount_received_kopiyky,
-             (COALESCE(b.sale_price_kopiyky, 0) - b.discount_kopiyky - b.amount_received_kopiyky) AS owed
+      SELECT b.id, b.title, b.sold_on, p.revenue_kopiyky, b.discount_kopiyky, b.amount_received_kopiyky,
+             (p.revenue_kopiyky - b.amount_received_kopiyky) AS owed
       FROM bouquets b
+      JOIN bouquet_profit p ON p.bouquet_id = b.id
       WHERE b.status = 'SOLD'
-        AND (COALESCE(b.sale_price_kopiyky, 0) - b.discount_kopiyky) > b.amount_received_kopiyky
+        AND p.revenue_kopiyky > b.amount_received_kopiyky
       ORDER BY owed DESC
     `);
-    const rows = (res.rows as Record<string, unknown>[]).map((r) => ({
-      id: String(r.id),
-      title: r.title ? String(r.title) : null,
-      soldOn: r.sold_on ? String(r.sold_on) : null,
-      salePriceKopiyky: num(r.sale_price_kopiyky),
+    const rows = res.rows.map((r) => ({
+      id: str(r.id),
+      title: strOrNull(r.title),
+      soldOn: strOrNull(r.sold_on),
+      // The full sum owed for the bouquet (revenue), so received + owed reconcile.
+      salePriceKopiyky: num(r.revenue_kopiyky),
       discountKopiyky: num(r.discount_kopiyky),
       amountReceivedKopiyky: num(r.amount_received_kopiyky),
       owedKopiyky: num(r.owed),

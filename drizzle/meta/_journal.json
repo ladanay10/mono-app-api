@@ -29,6 +29,13 @@
       "when": 1783504861560,
       "tag": "0003_expenses_in_revenue",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1783519561075,
+      "tag": "0004_packaging_is_profit",
+      "breakpoints": true
     }
   ]
 }

@@ -1,4 +1,13 @@
-import { IsIn, IsInt, IsNumber, IsOptional, IsString, IsUUID, MaxLength, Min } from 'class-validator';
+import {
+  IsIn,
+  IsInt,
+  IsNumber,
+  IsOptional,
+  IsString,
+  IsUUID,
+  MaxLength,
+  Min,
+} from 'class-validator';
 import { unitOfMeasure } from '../../db/schema';
 
 type Unit = (typeof unitOfMeasure.enumValues)[number];

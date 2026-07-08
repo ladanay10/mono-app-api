@@ -7,14 +7,21 @@ export function roundHalfUp(value: number): number {
 // quantity arrives from the DB as a numeric string (e.g. "4.000").
 export function parseQuantity(quantity: string | number): number {
   const n = typeof quantity === 'number' ? quantity : Number(quantity);
-  if (!Number.isFinite(n)) throw new Error(`Invalid quantity: ${String(quantity)}`);
+  if (!Number.isFinite(n))
+    throw new Error(`Invalid quantity: ${String(quantity)}`);
   return n;
 }
 
-export function lineCostKopiyky(unitPurchaseKopiyky: number, quantity: number): number {
+export function lineCostKopiyky(
+  unitPurchaseKopiyky: number,
+  quantity: number,
+): number {
   return roundHalfUp(unitPurchaseKopiyky * quantity);
 }
 
-export function lineRevenueKopiyky(unitSaleKopiyky: number, quantity: number): number {
+export function lineRevenueKopiyky(
+  unitSaleKopiyky: number,
+  quantity: number,
+): number {
   return roundHalfUp(unitSaleKopiyky * quantity);
 }

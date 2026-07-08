@@ -7,6 +7,10 @@ export const money = (name: string) => bigint(name, { mode: 'number' });
 
 // Persist UTC; render in the viewer's timezone (Europe/Kyiv) in the client.
 export const timestamps = {
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  createdAt: timestamp('created_at', { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true })
+    .notNull()
+    .defaultNow(),
 };

@@ -1,4 +1,12 @@
-import { IsBoolean, IsIn, IsInt, IsOptional, IsString, MaxLength, Min } from 'class-validator';
+import {
+  IsBoolean,
+  IsIn,
+  IsInt,
+  IsOptional,
+  IsString,
+  MaxLength,
+  Min,
+} from 'class-validator';
 import { catalogItemKind, unitOfMeasure } from '../../db/schema';
 
 type Kind = (typeof catalogItemKind.enumValues)[number];

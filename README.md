@@ -43,8 +43,24 @@ snapshots) · `expenses` (BOUQUET or GENERAL) · `bouquet_profit` (VIEW). See
 - `GET/POST /expenses`, `DELETE /expenses/:id`
 - `GET /reports/{summary,monthly,top-flowers,outstanding}`
 
+## Security
+
+- Global JWT guard (`@Public()` opts a route out); tokens are re-validated against
+  the live user (`isActive`) on every request, so deactivation revokes access.
+- Login is rate-limited to 10 attempts / minute / IP; every other route to 120/min
+  (`@nestjs/throttler`). Passwords are bcrypt-hashed.
+- Every inbound body is validated by a global `ValidationPipe`
+  (`whitelist` + `forbidNonWhitelisted`); all `:id` params are UUID-checked. Raw SQL
+  in reports uses parameterised Drizzle `sql` (no string interpolation).
+- Set a strong `JWT_SECRET`, a non-default `OWNER_PASSWORD`, and lock `CORS_ORIGIN`
+  to the deployed frontend origin(s) in production (`*` is dev-only convenience).
+
 ## Tests
 
 ```bash
-npm test            # money math + profit mapping unit tests
+npm test            # unit: money math + profit mapping
+npm run test:e2e    # full HTTP e2e (auth, catalog, bouquets, profit, immutability, expenses, reports)
 ```
+
+`test:e2e` boots the real app against a disposable `mono_reports_test` database
+(auto-created and migrated on first run) and needs a running local Postgres.
