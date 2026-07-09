@@ -10,6 +10,7 @@ import { CatalogModule } from './catalog/catalog.module';
 import { BouquetsModule } from './bouquets/bouquets.module';
 import { ExpensesModule } from './expenses/expenses.module';
 import { ReportsModule } from './reports/reports.module';
+import { RecipesModule } from './recipes/recipes.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 
 @Module({
@@ -24,6 +25,7 @@ import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
     BouquetsModule,
     ExpensesModule,
     ReportsModule,
+    RecipesModule,
   ],
   controllers: [AppController],
   providers: [

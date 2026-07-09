@@ -5,3 +5,5 @@ export * from './catalog-items';
 export * from './bouquets';
 export * from './bouquet-lines';
 export * from './expenses';
+export * from './recipes';
+export * from './recipe-lines';
