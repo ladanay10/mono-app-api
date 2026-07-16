@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { RecipesRepository } from './recipes.repository';
 import { BouquetsService } from '../bouquets/bouquets.service';
 import { SaveFromBouquetDto } from './dto/save-from-bouquet.dto';
@@ -33,10 +37,15 @@ export class RecipesService {
   }
 
   // Snapshot a bouquet's current composition into a reusable template.
-  async saveFromBouquet(dto: SaveFromBouquetDto, user: AuthUser): Promise<RecipeWithLines> {
+  async saveFromBouquet(
+    dto: SaveFromBouquetDto,
+    user: AuthUser,
+  ): Promise<RecipeWithLines> {
     const bouquet = await this.bouquets.get(dto.bouquetId); // throws 404 if missing
     if (bouquet.lines.length === 0) {
-      throw new BadRequestException('Cannot save an empty bouquet as a template');
+      throw new BadRequestException(
+        'Cannot save an empty bouquet as a template',
+      );
     }
     const recipe = await this.repo.create(
       { name: dto.name, notes: dto.notes ?? null, createdByUserId: user.id },
@@ -61,7 +70,10 @@ export class RecipesService {
       const quantity = Number(line.quantity);
       if (line.catalogItemId) {
         try {
-          await this.bouquets.addLine(bouquet.id, { catalogItemId: line.catalogItemId, quantity });
+          await this.bouquets.addLine(bouquet.id, {
+            catalogItemId: line.catalogItemId,
+            quantity,
+          });
           continue;
         } catch {
           /* catalog item gone — fall back to the stored snapshot below */

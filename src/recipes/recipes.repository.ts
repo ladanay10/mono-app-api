@@ -15,7 +15,9 @@ export class RecipesRepository {
   constructor(@Inject(DRIZZLE) private readonly db: Database) {}
 
   list(): Promise<Recipe[]> {
-    return this.db.query.recipes.findMany({ orderBy: [desc(recipes.createdAt)] });
+    return this.db.query.recipes.findMany({
+      orderBy: [desc(recipes.createdAt)],
+    });
   }
 
   findById(id: string): Promise<Recipe | undefined> {
@@ -38,11 +40,16 @@ export class RecipesRepository {
   }
 
   // Create the recipe and its lines together so a failure leaves neither half.
-  async create(recipe: NewRecipe, lines: Omit<NewRecipeLine, 'recipeId'>[]): Promise<Recipe> {
+  async create(
+    recipe: NewRecipe,
+    lines: Omit<NewRecipeLine, 'recipeId'>[],
+  ): Promise<Recipe> {
     return this.db.transaction(async (tx) => {
       const [row] = await tx.insert(recipes).values(recipe).returning();
       if (lines.length) {
-        await tx.insert(recipeLines).values(lines.map((l) => ({ ...l, recipeId: row.id })));
+        await tx
+          .insert(recipeLines)
+          .values(lines.map((l) => ({ ...l, recipeId: row.id })));
       }
       return row;
     });
