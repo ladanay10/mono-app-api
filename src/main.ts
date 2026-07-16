@@ -1,12 +1,18 @@
 import 'dotenv/config';
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import type { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
 import { AppConfig } from './config/config.service';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
   const config = app.get(AppConfig);
+
+  // Behind the CDN/host proxy (Cloudflare → Fly). Lets Express derive the real
+  // client from X-Forwarded-For, so the rate limiter keys on the visitor, not
+  // the proxy. (The throttler also reads CF-Connecting-IP directly.)
+  app.set('trust proxy', 1);
 
   app.setGlobalPrefix('api');
   app.useGlobalPipes(
